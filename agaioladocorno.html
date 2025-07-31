@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Gaiola do Corno: Desafios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Red Stiletto -->
+    <!-- Application Structure Plan: A filterable card gallery structure was chosen, mirroring the 'Jogo da Deusa' app for consistency and usability. Each card represents a single, individual challenge for the Corno. This is a direct change from the previous version's "sets of 5" mechanic. A top filter bar allows the Queen to sort challenges by theme (Submissão, Servidão, etc.), making it easy to find a suitable task for her mood. Clicking a card opens a modal with the specific task description. This structure is intuitive and supports a direct user flow: 1. Filter by category. 2. Browse individual challenges. 3. Select one for the order. 4. Mark as complete. This open-gallery format is more flexible and user-friendly than the previous grouped-choice model. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: A large list of individual challenges -> Goal: Organize & Explore -> Presentation: Interactive Card Gallery (HTML/Tailwind) -> Interaction: Click to open modal, filter by category. State change on completion. -> Justification: A card gallery is the best way to browse a large set of distinct items. Filtering is essential for usability.
+        - Report Info: Specific challenge description -> Goal: Inform -> Presentation: Text block within a modal window -> Interaction: Modal appears on card click. -> Justification: The modal provides a focused view for the Queen to read the order she is about to give.
+        - Report Info: Challenge categories -> Goal: Filter -> Presentation: Filter buttons -> Interaction: Click to dynamically re-render the card gallery. -> Justification: The most intuitive UI pattern for filtering content.
+        - Report Info: Overall progress -> Goal: Synthesize -> Viz: Doughnut Chart (Chart.js/Canvas) -> Interaction: Updates automatically as challenges are completed. -> Justification: A doughnut chart offers a simple, elegant visual summary of the proportion of completed vs. available challenges.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-image: url('https://images.pexels.com/photos/4674327/pexels-photo-4674327.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #e0e0e0;
+        }
+        h1, h2, h3, .font-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+        }
+        .card {
+            background-color: rgba(10, 10, 10, 0.8);
+            border: 1px solid #8B0000;
+            color: #f5f5f5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 150px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(220, 20, 60, 0.2), 0 4px 6px -2px rgba(220, 20, 60, 0.1);
+        }
+        .card.completed {
+            background-color: rgba(40, 40, 40, 0.7);
+            opacity: 0.5;
+        }
+        .filter-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #8B0000;
+            color: #f5f5f5;
+        }
+        .filter-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .filter-btn.active {
+            background-color: #DC143C;
+            color: #ffffff;
+            border-color: #DC143C;
+        }
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 300px;
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .section-bg {
+            background-color: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #8B0000;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8 py-4 rounded-lg section-bg shadow-lg">
+            <h1 class="text-5xl md:text-7xl text-white">A Gaiola do Corno</h1>
+            <p class="text-lg text-[#c7c7c7] mt-2">O Catálogo de Deveres do Meu Servo.</p>
+        </header>
+
+        <section class="mb-8 p-6 rounded-lg shadow-lg section-bg">
+            <h2 class="text-3xl text-center mb-4 text-white">Manual do Jogo: Edição Renda & Salto</h2>
+            <div class="text-left text-[#c7c7c7] space-y-2 max-w-4xl mx-auto">
+                <div class="border-t border-gray-700 pt-2">
+                    <button class="collapsible-trigger w-full flex justify-between items-center text-left">
+                        <h3 class="font-semibold text-lg text-white">As Regras do Jogo</h3>
+                        <span class="transform transition-transform duration-300 text-2xl font-light">＋</span>
+                    </button>
+                    <div class="collapsible-content mt-2 text-sm">
+                        <ol class="list-decimal list-inside space-y-1 pt-2">
+                            <li><strong>A Escolha da Rainha:</strong> Antes de sair, a Rainha navega pela galeria e escolhe UM desafio para o seu Corno.</li>
+                            <li><strong>A Ordem:</strong> A Rainha clica no desafio para ver os detalhes e dá a sua ordem verbalmente.</li>
+                            <li><strong>A Execução:</strong> O Corno deve cumprir a tarefa designada durante a ausência da sua Rainha.</li>
+                            <li><strong>O Registo:</strong> Ao retornar, se a tarefa foi cumprida, o Corno pode marcar o desafio como "Concluído".</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="filter-container" class="flex flex-wrap justify-center gap-2 mb-8">
+            <!-- Filter buttons will be generated here -->
+        </div>
+
+        <main id="challenge-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Challenge cards will be generated here -->
+        </main>
+
+        <section class="mt-12 p-6 rounded-lg shadow-xl section-bg">
+             <h2 class="text-4xl text-center mb-6 text-white">Registo de Devoção</h2>
+             <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+             <div class="mt-6 text-center">
+                <button id="reset-button" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">Reiniciar Progresso</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="challenge-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden modal-backdrop opacity-0">
+        <div class="bg-[#1a1a1a] border-2 border-[#8B0000] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-content scale-95">
+            <div id="modal-content-inner" class="p-8">
+                <!-- Modal content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const challenges = [
+            { id: 1, name: "O Look Essencial", category: "Submissão", description: "Vestir saia curta, meias 7/8 e um plug anal (médio ou grande, à minha escolha)." },
+            { id: 2, name: "Pernas de Seda", category: "Submissão", description: "Vestir meias 7/8 com cinta-liga, salto alto e um plug anal." },
+            { id: 3, name: "Fantasia de Empregada", category: "Submissão", description: "Vestir o uniforme completo de empregada para realizar tarefas, usando um plug anal grande." },
+            { id: 4, name: "Fantasia de Colegial", category: "Submissão", description: "Vestir o uniforme completo de colegial, incluindo um plug com cauda de raposa." },
+            { id: 5, name: "A Sissy de Espera", category: "Submissão", description: "Com o look completo de sissy e um plug com cauda, ficar na sala como uma boneca, esperando sua dona." },
+            { id: 6, name: "Castidade e Renda", category: "Castidade", description: "Usar o cinto de castidade sobre um conjunto de lingerie de renda preta." },
+            { id: 7, name: "O Segredo sob a Roupa", category: "Submissão", description: "Usar um conjunto completo de lingerie de renda (sutiã e calcinha) por baixo de suas roupas normais de ficar em casa o dia todo." },
+            { id: 8, name: "O Ensaio da Empregada", category: "Submissão", description: "Vestir uma fantasia completa de empregada e tirar 10 fotos em poses de limpeza e submissão pela casa." },
+            { id: 9, name: "A Prova da Lingerie Usada", category: "Submissão", description: "Vestir um conjunto de lingerie que ela usou em um encontro recente e tirar 5 fotos em poses diferentes, enviando para ela com a legenda 'Honrando o seu poder, minha Rainha'." },
+            { id: 10, name: "Crítico de Cinema Íntimo", category: "Adoração", description: "Vestindo uma das minhas camisolas, assistir a um filme que eu escolher e depois escrever uma análise de 200 palavras sobre ele." },
+            { id: 11, name: "Fotógrafo de Lingerie", category: "Servidão", description: "A sua tarefa é tirar 15 fotos minhas em 3 conjuntos de lingerie diferentes. Você deve usar apenas uma calcinha minha durante a sessão." },
+            { id: 12, name: "A Posição de Espera", category: "Humilhação", description: "Usando calcinha aberta, plug e salto agulha, ficar na pose 'de quatro' na cama dela pelos últimos 30 minutos antes de ela chegar." },
+            { id: 13, name: "A Tatuagem de Propriedade", category: "Humilhação", description: "Escrever na sua própria coxa ou barriga a frase 'Putinha da Rainha [Nome dela]' com delineador." },
+            { id: 14, name: "A Gravação da Confissão", category: "Humilhação", description: "Gravar um vídeo declarando que seus buracos pertencem exclusivamente a ela." },
+            { id: 15, name: "O Treino da Boca de Puta", category: "Fetiches", description: "Praticar sexo oral em um dildo grande em frente ao espelho por 20 minutos." },
+            { id: 16, name: "A Maratona da Negação", category: "Castidade", description: "Trancado em castidade, assistir a pornografia e se dar uma palmada na coxa sempre que ficar muito excitado." },
+            { id: 17, name: "O Castigo dos Saltos", category: "Fetiches", description: "Ficar de pé, de frente para a parede, usando os saltos mais altos dela, por 30 minutos sem se mover." },
+            { id: 18, name: "A Apresentação dos Buracos", category: "Humilhação", description: "De quatro e com um plug, tirar 3 fotos do seu 'buraco' para inspeção dela (relaxado, contraindo, sem o plug)." },
+            { id: 19, name: "A Lição de Postura", category: "Submissão", description: "Usando um espartilho, saia e salto, sentar-se em uma cadeira de costas retas por uma hora." },
+            { id: 20, name: "A Gaiola Dupla", category: "Castidade", description: "Usar o cinto de castidade e um plug anal ao mesmo tempo, por no mínimo duas horas." },
+            { id: 21, name: "O Plug Crescente", category: "Fetiches", description: "Começar o dia com o menor plug e, a cada 90 minutos, trocar para o próximo tamanho, relatando seu progresso." },
+            { id: 22, name: "O Sino da Putinha", category: "Humilhação", description: "Anexar um pequeno sino (guizo) à sua calcinha ou plug e tentar se mover pela casa em silêncio." },
+            { id: 23, name: "A Feminização em Etapas", category: "Rituais", description: "A cada duas horas, adicionar uma nova peça de roupa feminina (calcinha, meias, saia, etc.), construindo o look ao longo do dia." },
+            { id: 24, name: "Garçom de Lingerie", category: "Servidão", description: "Vestindo uma lingerie sexy dela e uma gravata borboleta, servir o jantar dela." },
+            { id: 25, name: "Adoração em Salto", category: "Adoração", description: "Usando apenas salto alto, limpar e organizar todo o closet dela." },
+            { id: 26, name: "Guardião do Closet", category: "Adoração", description: "De salto alto e um plug anal grande, organizar todos os sapatos dela por cor e estilo." },
+            { id: 27, name: "Inventário do Prazer", category: "Servidão", description: "Vestindo a fantasia de empregada, organizar e limpar todos os sex toys dela." },
+            { id: 28, name: "A Adoração dos Saltos", category: "Adoração", description: "Reunir todos os sapatos de salto dela, ajoelhar-se no centro e beijar cada par." },
+            { id: 29, name: "Vigília de Lingerie", category: "Humilhação", description: "Ficar de pé, em posição de sentido, no canto do quarto por 20 minutos, de lingerie e venda." },
+            { id: 30, name: "Castidade em Serviço", category: "Castidade", description: "Usar o cinto de castidade enquanto lava a louça ou aspira a casa." },
+            { id: 31, name: "O Troféu Húmido", category: "Rituais", description: "Vestir uma calcinha que ela deixou (usada após um passeio) e permanecer com ela por no mínimo duas horas." },
+            { id: 32, name: "O Dia de Trabalho da Sissy", category: "Rituais", description: "Simular um 'dia de trabalho' como secretária dela, vestido a rigor e enviando 'relatórios de status' a cada hora." },
+            { id: 33, name: "O Teste de Resistência da Castidade", category: "Rituais", description: "Passar o dia inteiro trancado no cinto de castidade, com a chave visível mas inacessível." },
+            { id: 34, name: "O 'Spa Day' da Serva", category: "Rituais", description: "Realizar um ritual de beleza completo em si mesmo ao longo do dia (banho, depilação, unhas, hidratação)." },
+            { id: 35, name: "A Prova da Lingerie Usada (Estendida)", category: "Rituais", description: "Vestir um conjunto que ela usou num encontro e não tirá-lo até ela chegar." },
+            { id: 36, name: "Porteiro de Salto", category: "Servidão", description: "Por 30 min antes da chegada dela, ficar de pé ao lado da porta de saltos e luvas brancas para recebê-la." },
+            { id: 37, name: "Caminhada da Negação", category: "Castidade", description: "De castidade e plug com cauda, dar 10 voltas lentas pela sala, parando para beijar a chave." },
+            { id: 38, name: "O Bronzeado da Putinha", category: "Exibicionismo", description: "Passar pelo menos uma hora a apanhar sol na varanda, usando um biquíni fio-dental e óleo corporal." },
+            { id: 39, name: "A Marca da Propriedade", category: "Exibicionismo", description: "Ficar no sol com um adesivo no formato da inicial dela no seu corpo para criar uma marca de bronzeado." },
+            { id: 40, name: "A Exposição na Varanda", category: "Exibicionismo", description: "Ficar na varanda por 10 minutos, vestido de lingerie e salto." }
+        ];
+
+        let state = {
+            challenges: [],
+            filter: 'Todas'
+        };
+        let progressChart;
+
+        function initializeState() {
+            const savedState = localStorage.getItem('gaiolaGameState');
+            if (savedState) {
+                state.challenges = JSON.parse(savedState);
+            } else {
+                state.challenges = challenges.map(c => ({ ...c, completed: false }));
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('gaiolaGameState', JSON.stringify(state.challenges));
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('challenge-grid');
+            grid.innerHTML = '';
+            const filteredChallenges = state.filter === 'Todas' 
+                ? state.challenges 
+                : state.challenges.filter(c => c.category === state.filter);
+
+            filteredChallenges.forEach(challenge => {
+                const card = document.createElement('div');
+                card.className = `card p-6 rounded-lg shadow-md`;
+                if (challenge.completed) {
+                    card.classList.add('completed');
+                }
+                card.innerHTML = `
+                    <div>
+                        <span class="block text-xs font-bold uppercase tracking-wider text-[#c7c7c7]">${challenge.category}</span>
+                        <h3 class="font-title text-2xl mt-1 text-white">${challenge.name}</h3>
+                    </div>
+                    <div class="text-right mt-4">
+                        <span class="text-sm font-semibold text-[#e43f5a]">Ver Ordem →</span>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(challenge.id));
+                grid.appendChild(card);
+            });
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filter-container');
+            const categories = ['Todas', ...new Set(challenges.map(s => s.category))];
+            container.innerHTML = categories.map(cat => `
+                <button data-filter="${cat}" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full border-2 border-[#8B0000] text-[#f5f5f5] hover:bg-[#8B0000]">
+                    ${cat}
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === state.filter) {
+                    btn.classList.add('active');
+                }
+                btn.addEventListener('click', () => {
+                    state.filter = btn.dataset.filter;
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderCards();
+                });
+            });
+        }
+        
+        function openModal(id) {
+            const challenge = state.challenges.find(c => c.id === id);
+            const modal = document.getElementById('challenge-modal');
+            const modalContent = document.getElementById('modal-content-inner');
+
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h2 class="text-4xl mb-4 text-white">${challenge.name}</h2>
+                    <button onclick="closeModal()" class="text-3xl font-bold text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <p class="text-lg text-white mb-6">${challenge.description}</p>
+                <div class="mt-8 flex gap-4">
+                    <button onclick="toggleComplete(${id})" class="flex-1 ${challenge.completed ? 'bg-gray-700' : 'bg-[#DC143C]'} text-white px-4 py-3 rounded-lg hover:opacity-80 transition-opacity">
+                        ${challenge.completed ? 'Marcar como por Fazer' : 'Marcar como Concluído'}
+                    </button>
+                    <button onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-400 transition-colors">Fechar</button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('challenge-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function toggleComplete(id) {
+            const challenge = state.challenges.find(c => c.id === id);
+            if (challenge) {
+                challenge.completed = !challenge.completed;
+                saveState();
+                renderCards();
+                updateChart();
+                closeModal();
+            }
+        }
+        
+        function updateChart() {
+            const completedCount = state.challenges.filter(s => s.completed).length;
+            const totalCount = state.challenges.length;
+            const remainingCount = totalCount - completedCount;
+
+            if (progressChart) {
+                progressChart.data.datasets[0].data = [completedCount, remainingCount];
+                progressChart.update();
+            }
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const completedCount = state.challenges.filter(s => s.completed).length;
+            const totalCount = state.challenges.length;
+            
+            progressChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Concluídos', 'Por Fazer'],
+                    datasets: [{
+                        data: [completedCount, totalCount - completedCount],
+                        backgroundColor: ['#DC143C', '#4a4e69'],
+                        borderColor: ['#1a1a1a', '#1a1a1a'],
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#c7c7c7' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function resetGame() {
+            if (confirm('Tem a certeza que deseja reiniciar todo o progresso?')) {
+                localStorage.removeItem('gaiolaGameState');
+                initializeState();
+                renderCards();
+                updateChart();
+            }
+        }
+
+        document.getElementById('reset-button').addEventListener('click', resetGame);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") closeModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeState();
+            renderFilters();
+            renderCards();
+            createChart();
+
+            document.querySelectorAll('.collapsible-trigger').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.classList.remove('rotate-45');
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.classList.add('rotate-45');
+                    } 
+                });
+            });
+        });
+    </script>
+</body>
+</html>
