@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Deusa: Desafios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Veiled Queen -->
+    <!-- Application Structure Plan: A filterable card gallery structure was chosen for this application. Unlike the bingo game, these challenges are independent and don't require a grid layout. A card gallery allows the user (the Queen) to browse all available missions visually. A prominent filtering bar at the top is the primary interaction point, enabling her to select challenges based on her mood and desired level of audacity (Bronze, Silver, Gold, Diamond). Clicking a card opens a modal window. This is crucial for usability as it focuses the user's attention on a single, detailed mission without losing the context of the main gallery. A progress section provides at-a-glance feedback. This structure supports a user flow of: 1. Filter by mood/level. 2. Browse options. 3. Select a mission for details. 4. Decide to undertake it. 5. Mark as complete later. It's a non-linear, exploratory approach that empowers the user. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: 50 independent challenges -> Goal: Organize & Explore -> Presentation: Interactive Card Gallery (HTML/Tailwind) -> Interaction: Click to open modal, filter by level. State change on completion. -> Justification: A card layout is ideal for browsing a large set of distinct items. Filtering is essential for managing a list of this size.
+        - Report Info: Detailed mission rules (proof, tribute, consequence) -> Goal: Inform -> Presentation: Text blocks within a modal window -> Interaction: Modal appears on card click. -> Justification: The modal provides a focused view for detailed information without cluttering the main interface.
+        - Report Info: Challenge levels (Bronze, Silver, etc.) -> Goal: Organize/Filter -> Presentation: Filter buttons -> Interaction: Click to dynamically re-render the card gallery. -> Justification: This is the most intuitive UI pattern for filtering content.
+        - Report Info: Overall progress -> Goal: Synthesize -> Viz: Bar Chart (Chart.js/Canvas) -> Interaction: Updates automatically as challenges are completed. -> Justification: A bar chart is excellent for comparing discrete categories (completed vs. remaining) and provides a clear visual summary of progress.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-image: url('https://images.pexels.com/photos/8797363/pexels-photo-8797363.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #3b0d0d;
+        }
+        h1, h2, h3, .font-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+        }
+        .card {
+            background-color: rgba(253, 251, 247, 0.95);
+            border: 1px solid #e6d8cb;
+            color: #3b0d0d;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+        .card.completed {
+            background-color: rgba(245, 241, 237, 0.8);
+            opacity: 0.6;
+        }
+        .card-level-bronze { border-left: 5px solid #cd7f32; }
+        .card-level-prata { border-left: 5px solid #c0c0c0; }
+        .card-level-ouro { border-left: 5px solid #ffd700; }
+        .card-level-diamante { border-left: 5px solid #b9f2ff; }
+
+        .filter-btn {
+            transition: all 0.2s ease;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid #d4c4b3;
+            color: #6d4c41;
+        }
+        .filter-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+        .filter-btn.active {
+            background-color: #3b0d0d;
+            color: #fdfbf7;
+            border-color: #3b0d0d;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+            max-height: 250px;
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .section-bg {
+            background-color: rgba(253, 251, 247, 0.95);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8 py-4 rounded-lg section-bg shadow-lg">
+            <h1 class="text-5xl md:text-7xl text-[#3b0d0d]">Desafios da Deusa</h1>
+            <p class="text-lg text-[#6d4c41] mt-2">O Arsenal de Ousadia da Minha Rainha.</p>
+        </header>
+
+        <section class="mb-8 p-6 rounded-lg shadow-lg section-bg">
+            <h2 class="text-3xl text-center mb-4 text-[#3b0d0d]">Manual do Jogo: O Arsenal da Rainha</h2>
+            <div class="text-left text-[#6d4c41] space-y-2 max-w-4xl mx-auto">
+                <div class="border-t border-[#e6d8cb] pt-2">
+                    <button class="collapsible-trigger w-full flex justify-between items-center text-left">
+                        <h3 class="font-semibold text-lg text-[#3b0d0d]">As Regras do Jogo</h3>
+                        <span class="transform transition-transform duration-300 text-2xl font-light text-[#3b0d0d]">＋</span>
+                    </button>
+                    <div class="collapsible-content mt-2 text-sm">
+                        <ol class="list-decimal list-inside space-y-1 pt-2">
+                            <li><strong>A Escolha da Rainha:</strong> A Rainha navega pela galeria e escolhe uma missão. Pode filtrar os desafios por Nível de Ousadia para se adequar ao seu humor.</li>
+                            <li><strong>A Execução:</strong> A Rainha realiza a missão secreta durante o seu dia, dentro do prazo de uma semana.</li>
+                            <li><strong>A Prova:</strong> Ela deve obter a prova descrita na carta (foto, áudio, narração) e enviá-la ao seu Corno.</li>
+                            <li><strong>O Tributo:</strong> Após a prova ser validada, o Corno deve pagar o "Tributo" correspondente: a recompensa financeira e o ato de adoração.</li>
+                            <li><strong>A Consequência:</strong> Se a Rainha falhar ou desistir da missão dentro do prazo, ela deve cumprir a "Consequência" descrita.</li>
+                        </ol>
+                    </div>
+                </div>
+                 <div class="border-t border-[#e6d8cb] pt-2">
+                     <button class="collapsible-trigger w-full flex justify-between items-center text-left">
+                        <h3 class="font-semibold text-lg text-[#3b0d0d]">Níveis de Ousadia</h3>
+                        <span class="transform transition-transform duration-300 text-2xl font-light text-[#3b0d0d]">＋</span>
+                    </button>
+                    <div class="collapsible-content mt-2 text-sm">
+                        <ul class="list-disc list-inside space-y-1 pt-2">
+                            <li><strong style="color: #cd7f32;">Bronze:</strong> Desafios discretos e de baixo risco.</li>
+                            <li><strong style="color: #a9a9a9;">Prata:</strong> Interações ousadas e com risco moderado.</li>
+                            <li><strong style="color: #d4af37;">Ouro:</strong> Atos de exibicionismo de alto risco.</li>
+                            <li><strong style="color: #5f9ea0;">Diamante:</strong> Missões de fetiche extremo e provas corporais íntimas.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="filter-container" class="flex flex-wrap justify-center gap-2 mb-8">
+            <!-- Filter buttons will be generated here -->
+        </div>
+
+        <main id="challenge-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Challenge cards will be generated here -->
+        </main>
+
+        <section class="mt-12 p-6 rounded-lg shadow-xl section-bg">
+             <h2 class="text-4xl text-center mb-6 text-[#3b0d0d]">Relatório de Conquistas</h2>
+             <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+             <div class="mt-6 text-center">
+                <button id="reset-button" class="bg-[#6d4c41] text-white px-4 py-2 rounded-lg hover:bg-[#3b0d0d] transition-colors">Reiniciar Progresso</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="challenge-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden modal-backdrop opacity-0">
+        <div class="bg-[#fdfbf7] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-content scale-95 text-[#3b0d0d]">
+            <div id="modal-content-inner" class="p-8">
+                <!-- Modal content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const challenges = [
+            {id: 1, name: "O Sutiã Opcional", level: "Bronze", mission: "Ir trabalhar sem sutiã por baixo de uma blusa que não seja transparente.", proof: "Uma selfie discreta no espelho do banheiro do escritório, onde a ausência do sutiã seja sugerida.", tribute: "Ele te entrega R$ 20,00 e terá permissão para chupar seus mamilos até você implorar para ele parar.", consequence: "Você deve usar o sutiã menos sexy que tiver no dia seguinte."},
+            {id: 2, name: "A Academia Íntima", level: "Bronze", mission: "Usar sua calcinha de renda mais sexy por baixo da legging de ginástica.", proof: "Uma foto discreta no vestiário, mostrando um detalhe da renda da calcinha.", tribute: "Ele te entrega R$ 20,00 e deve lavar seu corpo suado no chuveiro, prestando atenção especial às áreas que a calcinha cobria.", consequence: "Ele escolhe a calcinha (a mais simples que tiver) que você usará no próximo treino."},
+            {id: 3, name: "O Aroma Dela", level: "Bronze", mission: "Usar um perfume do seu Corno durante sua saída, como um lembrete secreto.", proof: "Uma mensagem de texto sua no meio do evento, descrevendo a sensação de carregar o cheiro dele com você.", tribute: "Ele te entrega R$ 20,00 e você deve deixá-lo cheirar o perfume no seu pescoço e pulsos pelo tempo que ele quiser.", consequence: "Você deve usar um perfume escolhido por ele (mesmo que não goste) por 3 dias seguidos."},
+            {id: 4, name: "O Plug Secreto", level: "Prata", mission: "Usar um plug anal (discreto e confortável) durante uma ida ao cinema ou a um café.", proof: "Uma selfie sua no local, com uma legenda descrevendo a sensação secreta.", tribute: "Ele te entrega R$ 35,00 e, ao chegar em casa, deve se ajoelhar e remover o plug com as mãos, sem usar os dentes.", consequence: "Você terá que usar o plug por mais uma hora em casa, enquanto ele apenas observa."},
+            {id: 5, name: "A Calcinha na Gaveta", level: "Bronze", mission: "Manter um par de calcinhas de renda na gaveta da sua mesa no trabalho por um dia.", proof: "Uma foto da calcinha na gaveta pela manhã e outra no final do dia.", tribute: "Ele te entrega R$ 20,00 e, como bônus, você pode ordenar que ele cheire a calcinha que ficou guardada.", consequence: "Você deve organizar a gaveta de meias dele."},
+            {id: 6, name: "O Acessório Íntimo", level: "Bronze", mission: "Usar um cinto de ligas (sem as meias) por baixo da roupa de ginástica.", proof: "Uma foto no vestiário mostrando o cinto de ligas sob a roupa.", tribute: "Ele te entrega R$ 20,00 e uma massagem relaxante nas suas coxas e virilha.", consequence: "Você terá que fazer 50 agachamentos para ele quando chegar em casa."},
+            {id: 7, name: "O Papel de Parede Ousado", level: "Prata", mission: "Usar uma foto sua de lingerie como protetor de tela do celular, que pode ser visto 'acidentalmente'.", proof: "Uma foto da tela do seu celular mostrando o novo papel de parede.", tribute: "Ele te entrega R$ 35,00 e o direito de escolher a próxima foto para o seu papel de parede.", consequence: "Você fica proibida de usar o celular para fins não essenciais por 24 horas."},
+            {id: 8, name: "O Segredo na Prova de Roupa", level: "Prata", mission: "Ao provar uma roupa, sair do provador para se olhar no espelho externo e 'acidentalmente' deixar a peça abrir, revelando a lingerie.", proof: "Sua narração detalhada do evento e se alguém notou.", tribute: "Ele te entrega R$ 35,00 e te compra a peça de roupa que você estava a provar.", consequence: "Você fica proibida de ir às compras por uma semana."},
+            {id: 9, name: "O Sinal na Janela", level: "Bronze", mission: "Se trabalha em escritório, colar um post-it com um símbolo secreto (um coração, uma coroa) no canto da sua janela por uma hora.", proof: "Uma foto do post-it na janela.", tribute: "Ele te entrega R$ 20,00 e uma massagem relaxante nas costas e ombros.", consequence: "Você deve organizar a secretária ou o espaço de trabalho dele."},
+            {id: 10, name: "O Toque na Estátua", level: "Bronze", mission: "Em um parque ou museu, tirar uma foto sua acariciando uma parte 'inapropriada' de uma estátua masculina.", proof: "A foto comprometedora.", tribute: "Ele te entrega R$ 20,00 e deve ficar imóvel como uma estátua enquanto você explora o corpo dele.", consequence: "Vocês devem visitar um museu juntos no próximo fim de semana."},
+            {id: 11, name: "O Desafio do Corrimão", level: "Bronze", mission: "Deslize a mão por um corrimão público de forma lenta e sensual.", proof: "Um vídeo curto da sua mão no ato.", tribute: "Ele te entrega R$ 20,00 e deve beijar suas mãos e cada um de seus dedos.", consequence: "Suas mãos ficam 'proibidas' por uma hora em casa."},
+            {id: 12, name: "A Prova de Sabor", level: "Bronze", mission: "Ir a uma sorveteria e pedir para provar dois sabores em uma mesma pazinha, de forma demorada e sensual.", proof: "Uma foto sua com o sorvete.", tribute: "Ele te entrega R$ 20,00 e deve comprar um pote de sorvete para vocês usarem no corpo um do outro.", consequence: "Você deve preparar uma salada de frutas para ele."},
+            {id: 13, name: "O Brinde Ousado", level: "Prata", mission: "Em um happy hour, ao brindar com um colega, deixe seus dedos roçarem os dele por um segundo a mais.", proof: "Sua narração detalhada do evento.", tribute: "Ele te entrega R$ 35,00 e deve recriar a cena, mas o toque dele durará o quanto você permitir.", consequence: "Você terá que servir todas as bebidas dele pelo resto da noite."},
+            {id: 14, name: "A Foto Proibida", level: "Prata", mission: "Enviar uma foto provocante para seu Corno, tirada no banheiro do local onde você está.", proof: "A foto recebida no celular.", tribute: "Ele te entrega R$ 35,00 e você deve recriar a foto ao vivo para ele.", consequence: "Você fica proibida de tirar selfies por uma semana."},
+            {id: 15, name: "Ir trabalhar sem calcinha", level: "Ouro", mission: "Passar um dia inteiro de trabalho sem usar calcinha.", proof: "Uma mensagem ao meio-dia e uma foto da calcinha em casa.", tribute: "Ele te entrega R$ 50,00 e te recebe com sexo oral.", consequence: "Você deve usar duas calcinhas no dia seguinte."},
+            {id: 16, name: "A Gota de Prova", level: "Diamante", mission: "Deixar a marca da sua excitação em um guardanapo como um troféu.", proof: "O guardanapo com a 'gota de prova'.", tribute: "Tributo especial de R$ 100,00. Ele terá o privilégio de lamber a prova dos seus dedos.", consequence: "'Compra da Vergonha' - você usa seu dinheiro para comprar uma calcinha sexy para ele."},
+            {id: 17, name: "A Calcinha 'Perdida'", level: "Ouro", mission: "Sair de casa com uma calcinha e voltar sem ela.", proof: "A calcinha 'perdida' entregue a ele em mãos.", tribute: "Ele te entrega R$ 50,00 e deve cheirar a calcinha enquanto te masturba.", consequence: "Você deve usar a calcinha menos sexy que tiver no próximo desafio."},
+            {id: 18, name: "A Selfie com um Estranho", level: "Prata", mission: "Pedir a um homem atraente para tirar uma selfie com você.", proof: "A selfie com o estranho.", tribute: "Ele te entrega R$ 35,00 e deve imprimir a foto e colocá-la num porta-retrato 'secreto'.", consequence: "Você deve tirar 10 selfies fazendo caretas e enviar para ele."},
+            {id: 19, name: "O Alongamento Provocante", level: "Prata", mission: "Fazer sua rotina de alongamentos em uma área de grande movimento, com posições que realcem suas curvas.", proof: "Uma narração em áudio descrevendo a cena.", tribute: "Ele te entrega R$ 35,00 e uma sessão de alongamento a dois em casa.", consequence: "Você terá que fazer 50 agachamentos para ele."},
+            {id: 20, name: "Sair sem calcinha com amigas", level: "Prata", mission: "Sair para um evento social com suas amigas sem usar calcinha.", proof: "Uma mensagem de texto do local.", tribute: "Ele te entrega R$ 35,00 e te recebe com uma taça de vinho.", consequence: "Você deve usar a calcinha mais comportada que tiver na próxima saída."},
+            {id: 21, name: "O Teste do Sofá", level: "Ouro", mission: "Vá a uma loja de móveis e 'teste o conforto' de um sofá, deixando sua saia subir 'desleixadamente'.", proof: "Uma selfie sua deitada no sofá da loja.", tribute: "Ele te entrega R$ 50,00 e deve te adorar no sofá de casa.", consequence: "Você fica proibida de se sentar no sofá de casa por 24 horas."},
+            {id: 22, name: "A Dança Proibida", level: "Prata", mission: "Em uma pista de dança, dance de forma extremamente sensual.", proof: "Um vídeo curto de você a dançar.", tribute: "Ele te entrega R$ 35,00 e deve ser seu 'go-go boy' particular.", consequence: "Na próxima festa, você só pode dançar músicas lentas."},
+            {id: 23, name: "A Liberdade Total", level: "Ouro", mission: "Sair para um evento social sem usar calcinha.", proof: "Sua narração detalhada da sensação de risco.", tribute: "Ele te entrega R$ 50,00 e te recebe de joelhos, pronto para verificar sua 'liberdade'.", consequence: "Você deve usar duas calcinhas na próxima saída."},
+            {id: 24, name: "O Descruzar de Pernas", level: "Prata", mission: "O ritual de cruzar e descruzar as pernas lentamente para criar uma 'visão acidental'.", proof: "Uma mensagem de texto descrevendo o cenário.", tribute: "Ele te entrega R$ 35,00 e você deve recriar a cena para ele.", consequence: "Você deve ficar sentada com as pernas firmemente cruzadas por uma hora."},
+            {id: 25, name: "A Caçadora de Contatos", level: "Ouro", mission: "Conseguir o número de telefone de um homem que não seja seu encontro principal.", proof: "Um print do novo contato salvo.", tribute: "Ele te entrega R$ 50,00 e tem a tarefa de digitar a primeira mensagem para o novo contato.", consequence: "Você deve apagar o contato na frente dele."},
+            {id: 26, name: "O Teatro por Baixo da Mesa", level: "Ouro", mission: "Em um jantar, deixe cair um objeto e, ao se abaixar, levante a saia para os colegas à sua frente.", proof: "Sua narração excitada do evento.", tribute: "Ele te entrega R$ 50,00 e deve recriar a cena, mas com sexo oral.", consequence: "Você terá que limpar por baixo de todos os móveis da sala."},
+            {id: 27, name: "A Calcinha no Lixo", level: "Ouro", mission: "Durante uma caminhada noturna, tire sua calcinha e jogue-a numa lixeira pública.", proof: "Uma foto da lixeira.", tribute: "Ele te entrega R$ 50,00 e te presenteia com 3 calcinhas novas.", consequence: "'Compra da Vergonha' - você usa seu dinheiro para comprar uma calcinha sexy para ele."},
+            {id: 28, name: "A Troca Secreta", level: "Prata", mission: "Sair de casa com uma calcinha e voltar sem ela.", proof: "A calcinha 'perdida' entregue a ele.", tribute: "Ele te entrega R$ 35,00 e deve cheirar a calcinha enquanto te masturba.", consequence: "Você deve usar a calcinha menos sexy no próximo desafio."},
+            {id: 29, name: "O 'flash' acidental", level: "Ouro", mission: "Dar um 'flash' da sua calcinha para um garçom ou mesa vizinha.", proof: "Uma mensagem de texto no momento exato.", tribute: "Ele te entrega R$ 50,00 e servirá seu jantar vestindo apenas um avental.", consequence: "Você deve servir o café da manhã para ele."},
+            {id: 30, name: "O Ajuste do Plug", level: "Ouro", mission: "Em público, pare e 'ajuste' discretamente o plug por baixo da saia.", proof: "Um áudio gravado no momento.", tribute: "Ele te entrega R$ 50,00 e deve fazer o 'ajuste final' com a língua.", consequence: "Você terá que usar o plug por mais uma hora em casa."},
+            {id: 31, name: "A Gorjeta Indiscreta", level: "Prata", mission: "Deixar uma mensagem ousada para o garçom na conta.", proof: "Uma foto da mensagem escrita.", tribute: "Ele te entrega R$ 35,00 e deve te dar uma 'gorjeta' extra em casa.", consequence: "Na próxima vez que saírem juntos, é você quem paga a conta."},
+            {id: 32, name: "O Roçar no Bar", level: "Prata", mission: "Esfregar-se 'acidentalmente' nas costas de um homem atraente.", proof: "Sua narração detalhada do evento.", tribute: "Ele te entrega R$ 35,00 e você pode se esfregar nele da mesma forma.", consequence: "Você deve pedir 'com licença' a ele sempre que precisar passar por ele."},
+            {id: 33, name: "A Saia na Escada Rolante", level: "Prata", mission: "Posicionar-se em uma escada rolante para dar uma visão privilegiada para quem está em baixo.", proof: "Uma selfie sua na escada rolante.", tribute: "Ele te entrega R$ 35,00 e deve recriar a 'visão superior' para ele.", consequence: "Você terá que subir 10 lances de escada com ele."},
+            {id: 34, name: "A Confissão para a Amiga", level: "Prata", mission: "Dizer a uma amiga: 'Às vezes, meu marido me pede para fazer umas coisas bem ousadas...'.", proof: "A narração detalhada da reação da sua amiga.", tribute: "Ele te entrega R$ 35,00 e se torna seu 'confessor' por uma noite.", consequence: "Você deve ouvir um 'segredo' dele por 15 minutos."},
+            {id: 35, name: "O Provador Nu", level: "Ouro", mission: "Tirar uma foto completamente nua no provador de uma loja de lingerie.", proof: "A foto nua enviada do provador.", tribute: "Ele te entrega R$ 50,00 e te espera em casa, também nu.", consequence: "Você fica proibida de se olhar no espelho nua por 24 horas."},
+            {id: 36, name: "O Desafio da Estante Alta", level: "Prata", mission: "Pedir ajuda a um homem alto para pegar um item numa prateleira, dando-lhe uma visão 'acidental'.", proof: "O item que o homem pegou para você.", tribute: "Ele te entrega R$ 35,00 e deve ser seu 'servo alto' pelo resto da noite.", consequence: "Você terá que arrumar todas as prateleiras altas da casa."},
+            {id: 37, name: "A Cereja no Decote", level: "Ouro", mission: "Deslizar a cereja do seu drink para dentro do seu decote, e depois 'pescá-la' e comê-la.", proof: "Um vídeo curto do momento ou sua narração.", tribute: "Ele te entrega R$ 50,00 e usará seu decote como um 'prato'.", consequence: "Você fica proibida de comer sobremesas por uma semana."},
+            {id: 38, name: "O Beijo 'Roubado'", level: "Diamante", mission: "Conseguir um beijo de um estranho (no rosto ou um selinho).", proof: "Sua narração detalhada do evento.", tribute: "Tributo especial de R$ 100,00. Ele deve implorar por um beijo seu.", consequence: "Você fica proibida de beijá-lo na boca por 24 horas."},
+            {id: 39, name: "O 'Nip Slip' na Academia", level: "Ouro", mission: "'Acidentalmente' deixe um mamilo escapar do seu top de ginástica.", proof: "Sua narração ofegante do momento.", tribute: "Ele te entrega R$ 50,00 e o direito de exigir que ele adore seus seios.", consequence: "Você deve usar dois tops esportivos no próximo treino."},
+            {id: 40, name: "A Prova de Lingerie (para o Corno)", level: "Prata", mission: "Leve seu Corno a uma loja de lingerie e faça-o te ajudar a escolher um conjunto.", proof: "A humilhação dele, testemunhada por si.", tribute: "Ele te entrega R$ 35,00 e deve pagar pelo conjunto.", consequence: "Se ele não participar, ele paga pelo conjunto mais caro."},
+            {id: 41, name: "A Mensagem no Espelho", level: "Prata", mission: "Escrever uma mensagem ousada com batom no espelho de um banheiro público, tirar foto e apagar.", proof: "A foto da sua obra de arte.", tribute: "Ele te entrega R$ 35,00 e deve escrever a mesma frase nas suas costas com batom.", consequence: "Você terá que limpar todos os espelhos da casa."},
+            {id: 42, name: "O Sapato 'Perdido'", level: "Prata", mission: "Deixar seu sapato sair do pé e 'brincar' com ele debaixo da mesa.", proof: "Sua narração da cena.", tribute: "Ele te entrega R$ 35,00 e deve realizar adoração aos seus pés por 30 minutos.", consequence: "Você terá que andar descalça em casa pelo resto da noite."},
+            {id: 43, name: "A Prova Física", level: "Ouro", mission: "Voltar para casa com uma prova física de que esteve com um homem (cartão de visitas, etc.).", proof: "O objeto físico.", tribute: "Ele te entrega R$ 50,00 e deve adorar o 'troféu'.", consequence: "Você deve dar a ele um objeto seu como 'prêmio de consolação'."},
+            {id: 44, name: "O Toque Proibido", level: "Ouro", mission: "Criar uma desculpa para 'acidentalmente' tocar em um estranho de forma íntima.", proof: "Sua narração detalhada da situação.", tribute: "Ele te entrega R$ 50,00 e você pode recriar o toque nele com mais intensidade.", consequence: "Ele ganha o direito de te dar um toque 'surpresa' em casa."},
+            {id: 45, name: "A Revelação Parcial", level: "Prata", mission: "Dizer a uma amiga: 'Às vezes, meu marido me pede para fazer umas coisas bem ousadas...'.", proof: "A narração da reação da sua amiga.", tribute: "Ele te entrega R$ 35,00 e se ajoelha, agradecendo por você ser uma esposa 'obediente'.", consequence: "Você deve passar uma hora a ouvir as fantasias dele."},
+            {id: 46, name: "A Confissão para a Amiga", level: "Prata", mission: "Dizer a uma amiga: 'Às vezes, eu faço umas coisas só pela adrenalina...'.", proof: "A narração da reação dela.", tribute: "Ele te entrega R$ 35,00 e te recompensa com um orgasmo oral.", consequence: "Você deve guardar um segredo dele por uma semana."},
+            {id: 47, name: "O Desafio da Estante Alta", level: "Prata", mission: "Pedir ajuda a um homem alto para pegar um item, dando-lhe uma visão 'acidental'.", proof: "O item que o homem pegou.", tribute: "Ele te entrega R$ 35,00 e será seu 'servo alto' pelo resto da noite.", consequence: "Você terá que arrumar todas as prateleiras altas da casa."},
+            {id: 48, "name": "A Cereja no Decote", "level": "Ouro", "mission": "Deslizar a cereja do seu drink para dentro do seu decote, e depois 'pescá-la' e comê-la.", "proof": "Um vídeo curto do momento ou sua narração.", "tribute": "Ele te entrega R$ 50,00 e usará seu decote como um 'prato'.", "consequence": "Você fica proibida de comer sobremesas por uma semana."},
+            {id: 49, name: "A Chave do Hotel", level: "Diamante", mission: "Conseguir a chave (ou o número) do quarto de hotel de um homem que você conhecer num bar.", proof: "Uma foto da chave ou do número anotado.", tribute: "Tributo especial de R$ 100,00. Ele deve te tratar como uma prostituta de luxo pelo resto da noite.", consequence: "Você deve dormir no sofá."},
+            {id: 50, name: "O Pedido de Ajuda Íntimo", level: "Ouro", mission: "Em uma loja, peça a um funcionário homem para te ajudar em um provador com um zíper 'emperrado' nas suas costas.", proof: "Sua narração da proximidade e da reação dele.", tribute: "Ele te entrega R$ 50,00 e deve te ajudar a se despir, peça por peça.", consequence: "Você deve vestir a roupa que ele escolher para a próxima saída de vocês."}
+        ];
+
+        let state = {
+            challenges: [],
+            filter: 'Todos'
+        };
+        let progressChart;
+
+        function initializeState() {
+            const savedState = localStorage.getItem('deusaGameState');
+            if (savedState) {
+                state.challenges = JSON.parse(savedState);
+            } else {
+                state.challenges = challenges.map(c => ({ ...c, completed: false }));
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('deusaGameState', JSON.stringify(state.challenges));
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('challenge-grid');
+            grid.innerHTML = '';
+            const filteredChallenges = state.filter === 'Todos' 
+                ? state.challenges 
+                : state.challenges.filter(c => c.level === state.filter);
+
+            filteredChallenges.forEach(challenge => {
+                const card = document.createElement('div');
+                card.className = `card p-4 rounded-lg shadow-md flex flex-col justify-between card-level-${challenge.level.toLowerCase()}`;
+                if (challenge.completed) {
+                    card.classList.add('completed');
+                }
+                card.innerHTML = `
+                    <div>
+                        <span class="block text-xs font-bold uppercase tracking-wider text-[#a1887f]">${challenge.level}</span>
+                        <h3 class="font-title text-xl mt-1">${challenge.name}</h3>
+                    </div>
+                    <div class="text-right mt-4">
+                        <span class="text-sm font-semibold text-[#3b0d0d]">Ver Detalhes →</span>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(challenge.id));
+                grid.appendChild(card);
+            });
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filter-container');
+            const levels = ['Todos', 'Bronze', 'Prata', 'Ouro', 'Diamante'];
+            container.innerHTML = levels.map(level => `
+                <button data-filter="${level}" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full border-2 border-[#d4c4b3] text-[#6d4c41] hover:bg-[#d4c4b3]">
+                    ${level}
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === state.filter) {
+                    btn.classList.add('active');
+                }
+                btn.addEventListener('click', () => {
+                    state.filter = btn.dataset.filter;
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderCards();
+                });
+            });
+        }
+        
+        function openModal(id) {
+            const challenge = state.challenges.find(c => c.id === id);
+            const modal = document.getElementById('challenge-modal');
+            const modalContent = document.getElementById('modal-content-inner');
+
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h2 class="text-4xl mb-4">${challenge.name}</h2>
+                    <button onclick="closeModal()" class="text-3xl font-bold text-[#a1887f] hover:text-[#3b0d0d]">&times;</button>
+                </div>
+                <div class="space-y-4 text-[#6d4c41]">
+                    <div><strong class="font-semibold text-[#3b0d0d] block">Nível de Ousadia:</strong> <span class="text-lg">${challenge.level}</span></div>
+                    <div><strong class="font-semibold text-[#3b0d0d] block">A Missão:</strong> <p>${challenge.mission}</p></div>
+                    <div><strong class="font-semibold text-[#3b0d0d] block">Prova para o Corno:</strong> <p>${challenge.proof}</p></div>
+                    <div><strong class="font-semibold text-[#3b0d0d] block">O Tributo do Corno:</strong> <p>${challenge.tribute}</p></div>
+                    <div><strong class="font-semibold text-[#3b0d0d] block">A Consequência da Rainha:</strong> <p>${challenge.consequence}</p></div>
+                </div>
+                <div class="mt-8 flex gap-4">
+                    <button onclick="toggleComplete(${id})" class="flex-1 ${challenge.completed ? 'bg-[#c5a78c]' : 'bg-[#3b0d0d]'} text-white px-4 py-3 rounded-lg hover:opacity-80 transition-opacity">
+                        ${challenge.completed ? 'Desmarcar Conquista' : 'Marcar como Concluído'}
+                    </button>
+                    <button onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-400 transition-colors">Fechar</button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('challenge-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function toggleComplete(id) {
+            const challenge = state.challenges.find(c => c.id === id);
+            if (challenge) {
+                challenge.completed = !challenge.completed;
+                saveState();
+                renderCards();
+                updateChart();
+                closeModal();
+            }
+        }
+        
+        function updateChart() {
+            const completedCount = state.challenges.filter(c => c.completed).length;
+            const totalCount = state.challenges.length;
+            const remainingCount = totalCount - completedCount;
+
+            if (progressChart) {
+                progressChart.data.datasets[0].data = [completedCount, remainingCount];
+                progressChart.update();
+            }
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const completedCount = state.challenges.filter(c => c.completed).length;
+            const totalCount = state.challenges.length;
+            
+            progressChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Progresso'],
+                    datasets: [{
+                        label: 'Concluídos',
+                        data: [completedCount],
+                        backgroundColor: '#3b0d0d',
+                        borderRadius: 5,
+                    }, {
+                        label: 'Restantes',
+                        data: [totalCount - completedCount],
+                        backgroundColor: '#e6d8cb',
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: totalCount,
+                            display: false,
+                        },
+                        y: {
+                            stacked: true,
+                            display: false,
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#6d4c41' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function resetGame() {
+            if (confirm('Tem a certeza que deseja reiniciar todo o progresso? As suas conquistas serão perdidas.')) {
+                localStorage.removeItem('deusaGameState');
+                initializeState();
+                renderCards();
+                updateChart();
+            }
+        }
+
+        document.getElementById('reset-button').addEventListener('click', resetGame);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") closeModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeState();
+            renderFilters();
+            renderCards();
+            createChart();
+
+            document.querySelectorAll('.collapsible-trigger').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.classList.remove('rotate-45');
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.classList.add('rotate-45');
+                    } 
+                });
+            });
+        });
+    </script>
+</body>
+</html>
