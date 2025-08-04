@@ -10,10 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Red Stiletto -->
-    <!-- Application Structure Plan: A filterable card gallery structure was chosen, mirroring the 'Jogo da Deusa' app for consistency and usability. Each card represents a single, individual challenge for the Corno. This is a direct change from the previous version's "sets of 5" mechanic. A top filter bar allows the Queen to sort challenges by theme (Submissão, Servidão, etc.), making it easy to find a suitable task for her mood. Clicking a card opens a modal with the specific task description. This structure is intuitive and supports a direct user flow: 1. Filter by category. 2. Browse individual challenges. 3. Select one for the order. 4. Mark as complete. This open-gallery format is more flexible and user-friendly than the previous grouped-choice model. -->
+    <!-- Application Structure Plan: A filterable card gallery structure was chosen, mirroring the 'Jogo da Deusa' app for consistency and usability. Each card represents a single, individual challenge for the Corno. This is a direct change from the previous version's "sets of 5" mechanic. A top filter bar allows the Queen to sort missions by theme (Submissão, Servidão, etc.), making it easy to find a suitable task for her mood. Clicking a card opens a modal with the specific task description. This structure is intuitive and supports a direct user flow: 1. Filter by category. 2. Browse individual challenges. 3. Select one for the order. 4. Mark as complete. This open-gallery format is more flexible and user-friendly than the previous grouped-choice model. -->
     <!-- Visualization & Content Choices: 
         - Report Info: A large list of individual challenges -> Goal: Organize & Explore -> Presentation: Interactive Card Gallery (HTML/Tailwind) -> Interaction: Click to open modal, filter by category. State change on completion. -> Justification: A card gallery is the best way to browse a large set of distinct items. Filtering is essential for usability.
-        - Report Info: Specific challenge description -> Goal: Inform -> Presentation: Text block within a modal window -> Interaction: Modal appears on card click. -> Justification: The modal provides a focused view for the Queen to read the order she is about to give.
+        - Report Info: Specific challenge description -> Goal: Inform -> Presentation: Text blocks within a modal window -> Interaction: Modal appears on card click. -> Justification: The modal provides a focused view for the Queen to read the order she is about to give.
         - Report Info: Challenge categories -> Goal: Filter -> Presentation: Filter buttons -> Interaction: Click to dynamically re-render the card gallery. -> Justification: The most intuitive UI pattern for filtering content.
         - Report Info: Overall progress -> Goal: Synthesize -> Viz: Doughnut Chart (Chart.js/Canvas) -> Interaction: Updates automatically as challenges are completed. -> Justification: A doughnut chart offers a simple, elegant visual summary of the proportion of completed vs. available challenges.
     -->
@@ -188,7 +188,10 @@
             { id: 37, name: "Caminhada da Negação", category: "Castidade", description: "De castidade e plug com cauda, dar 10 voltas lentas pela sala, parando para beijar a chave." },
             { id: 38, name: "O Bronzeado da Putinha", category: "Exibicionismo", description: "Passar pelo menos uma hora a apanhar sol na varanda, usando um biquíni fio-dental e óleo corporal." },
             { id: 39, name: "A Marca da Propriedade", category: "Exibicionismo", description: "Ficar no sol com um adesivo no formato da inicial dela no seu corpo para criar uma marca de bronzeado." },
-            { id: 40, name: "A Exposição na Varanda", category: "Exibicionismo", description: "Ficar na varanda por 10 minutos, vestido de lingerie e salto." }
+            { id: 40, name: "A Exposição na Varanda", category: "Exibicionismo", description: "Ficar na varanda por 10 minutos, vestido de lingerie e salto." },
+            { id: 41, name: "A Faxina da Vadia de Praia", category: "Servidão", description: "Sua tarefa é realizar uma limpeza física (aspirar a sala) vestindo apenas um biquíni fio-dental e um plug anal." },
+            { id: 42, name: "O Ensaio da Vadia de Praia", category: "Exibicionismo", description: "Cobrir-se de óleo corporal, vestir um biquíni fio-dental e tirar 5 fotos em 5 poses humilhantes que ela definir, enviando-as para ela ao longo do dia." },
+            { id: 43, name: "O Bronzeado da Submissão", category: "Exibicionismo", description: "Sua missão é passar uma hora na varanda, deitado numa toalha, como se estivesse a tomar sol. A cada 15 minutos, você deve mudar de posição, sabendo que está em exposição." }
         ];
 
         let state = {
@@ -325,7 +328,7 @@
                     labels: ['Concluídos', 'Por Fazer'],
                     datasets: [{
                         data: [completedCount, totalCount - completedCount],
-                        backgroundColor: ['#DC143C', '#4a4e69'],
+                        backgroundColor: ['#DC143C', 'rgba(255, 255, 255, 0.2)'],
                         borderColor: ['#1a1a1a', '#1a1a1a'],
                         borderWidth: 4
                     }]
