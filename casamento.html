@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operação: O Casamento Vermelho</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-image: url('https://images.pexels.com/photos/1577949/pexels-photo-1577949.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        h1, h2, h3, h4, .font-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+        }
+        .text-shadow {
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+        .section-bg {
+            background-color: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #8B0000;
+        }
+        .phase-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out;
+        }
+        .phase-trigger .icon {
+            transition: transform 0.5s ease;
+        }
+        .phase-trigger.open .icon {
+            transform: rotate(45deg);
+        }
+        .checkbox-label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-custom {
+            width: 1.5em;
+            height: 1.5em;
+            border: 2px solid #8B0000;
+            border-radius: 4px;
+            display: inline-block;
+            position: relative;
+            margin-right: 0.5em;
+        }
+        input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓';
+            font-size: 1.5em;
+            color: #DC143C;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body class="antialiased text-white">
+
+    <div class="container mx-auto p-4 sm:p-8 max-w-5xl">
+        <header class="text-center mb-8 py-6 rounded-lg section-bg shadow-2xl">
+            <h1 class="text-5xl md:text-7xl text-white text-shadow">Operação: O Casamento Vermelho</h1>
+            <p class="text-lg text-gray-300 mt-2 text-shadow">Um Dossiê de Missão para a Rainha e seu Corno.</p>
+        </header>
+
+        <div id="mission-phases" class="space-y-4">
+            <!-- As fases da missão serão renderizadas aqui pelo JavaScript -->
+        </div>
+        <div class="mt-8 text-center">
+            <button id="reset-button" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors shadow-lg">Reiniciar Operação</button>
+        </div>
+    </div>
+
+    <script>
+        const operationData = [
+            {
+                phase: "FASE 1: A AQUISIÇÃO",
+                subtitle: "Nas próximas duas semanas",
+                cornoMission: {
+                    title: "O Alfaiate Secreto",
+                    concept: "A sua compra não é apenas sobre uma camisa, é sobre provar a sua submissão mesmo enquanto desempenha um papel masculino.",
+                    tasks: [
+                        "<strong>Preparação:</strong> Antes de sair para comprar a sua camisa, o Corno deve vestir uma calcinha fio-dental vermelha da Rainha.",
+                        "<strong>A Compra:</strong> Ir a uma loja de roupas masculinas. Ao pedir ajuda, deve dizer: 'Preciso de uma camisa com um bom caimento, que não marque muito o que eu uso por baixo.'",
+                        "<strong>A Prova:</strong> No provador, o Corno deve tirar uma selfie vestindo a camisa escolhida, mas com a calça um pouco abaixada para mostrar o cós da calcinha. A foto deve ser enviada para a Rainha para 'aprovação'."
+                    ]
+                },
+                rainhaMission: {
+                    title: "O Vestido da Caça",
+                    concept: "O vestido da Rainha não é para celebrar os noivos. É a sua arma de sedução, escolhida para ser o centro das atenções e a fonte da tortura do seu Corno.",
+                    tasks: [
+                        "<strong>A Escolha:</strong> A missão da Rainha é encontrar o vestido mais sexy, ousado e revelador que o evento permite.",
+                        "<strong>A Prova:</strong> No provador, a Rainha deve tirar duas fotos para o seu Corno. A primeira, com o vestido e sua lingerie mais bonita. A segunda, com o vestido, mas <strong>sem calcinha</strong>, com a legenda: 'Acho que encontrei o vestido perfeito para caçar na festa. O que você acha?'"
+                    ]
+                }
+            },
+            {
+                phase: "FASE 2: A PREPARAÇÃO",
+                subtitle: "No dia do casamento",
+                cornoMission: {
+                    title: "O Ritual do Servo",
+                    concept: "A submissão do Corno será intensificada no ritual privado antes da festa.",
+                    tasks: [
+                        "<strong>O Uniforme:</strong> O Corno passará o dia usando uma calcinha fio-dental preta, como seu uniforme de serviço.",
+                        "<strong>O Equipamento Secreto:</strong> Durante toda a preparação, enquanto serve a sua Rainha, o Corno deve usar o plug anal.",
+                        "<strong>As Tarefas:</strong> Ele é o camareiro da Rainha. Suas tarefas são: preparar o banho dela, ajudá-la com a depilação, aplicar seu creme hidratante e, por fim, ajudá-la a vestir, ajoelhando-se para calçar seus sapatos."
+                    ]
+                },
+                rainhaMission: {
+                    title: "A Marca da Rainha",
+                    concept: "A Rainha se prepara para a batalha, marcando a si mesma e a sua propriedade.",
+                    tasks: [
+                        "<strong>A Marcação:</strong> A Rainha aplica uma tatuagem temporária de 'QoS' num local que possa ficar sutilmente visível com o seu vestido.",
+                        "<strong>O Perfume da Posse:</strong> A Rainha pega na **calcinha fio-dental preta** (a que ele usará na festa) e borrifa o seu perfume nela."
+                    ]
+                }
+            },
+            {
+                phase: "FASE 3: A INFILTRAÇÃO",
+                subtitle: "Durante o casamento",
+                cornoMission: {
+                    title: "O Cúmplice Secreto",
+                    concept: "O Corno atua como o guardião dos segredos da Rainha, sempre ciente do seu verdadeiro papel.",
+                    tasks: [
+                        "<strong>O Uniforme Secreto:</strong> Por baixo do seu traje formal, o Corno usará a sua **calcinha fio-dental preta** (previamente perfumada) e um par de meias 7/8 com cinta-liga.",
+                        "<strong>O Guardião do Troféu:</strong> Ao sinal da Rainha, ele deve segui-la a um local reservado, receber a calcinha molhada dela e guardá-la no bolso pelo resto da noite."
+                    ]
+                },
+                rainhaMission: {
+                    title: "A Deusa Secreta",
+                    concept: "A Rainha se diverte, sabendo que cada ato de ousadia é uma faca na mente do seu Corno.",
+                    tasks: [
+                        "<strong>O Troféu Húmido:</strong> No auge da festa, a Rainha dará o sinal, irá a um local discreto, tirará a sua calcinha fio-dental preta encharcada e a passará para a mão do seu Corno. Ela voltará para a festa sem calcinha.",
+                        "<strong>O Sinal:</strong> Em algum momento, a Rainha encontrará uma forma de mostrar discretamente a sua tatuagem de 'QoS'. Quando o Corno a vir, ele deve enviar o emoji de uma corrente (⛓️).",
+                        "<strong>A Provocação Digital:</strong> Encontrar o homem mais atraente da festa e enviar 3 mensagens provocadoras ao Corno ao longo da noite."
+                    ]
+                }
+            },
+            {
+                phase: "FASE 4: A EXTRAÇÃO",
+                subtitle: "Na volta para casa",
+                cornoMission: {
+                    title: "A Passagem da Rainha (Corno)",
+                    concept: "O Corno será uma testemunha impotente do exibicionismo final da sua Rainha.",
+                    tasks: [
+                        "<strong>A Espera:</strong> Ao chegarem ao destino, o Corno deve sair do carro primeiro e ficar de pé ao lado da porta, a esperar pela Rainha.",
+                        "<strong>A Tortura:</strong> Ele será uma testemunha impotente, a assistir ao espetáculo privado da Rainha de fora do carro, sabendo que o motorista está a ter a visão mais privilegiada."
+                    ]
+                },
+                rainhaMission: {
+                    title: "A Passagem da Rainha (Rainha)",
+                    concept: "A Rainha executa um ato final de exibicionismo para o motorista, com o Corno como sua plateia cativa.",
+                    tasks: [
+                        "<strong>A Execução:</strong> A Rainha sairá pela mesma porta que o Corno. Para isso, ela terá que se arrastar pelo banco de trás. No meio do caminho, com o motorista a olhar pelo retrovisor, ela vai <strong>abrir as pernas propositalmente por um segundo</strong>, oferecendo a ele uma visão clara do que ele não pode ter."
+                    ]
+                }
+            },
+            {
+                phase: "FASE 5: O DEBRIEFING",
+                subtitle: "Ao chegar em casa",
+                cornoMission: {
+                    title: "O Confessionário",
+                    concept: "A operação só termina quando a Rainha estiver satisfeita e o servo tiver sido devidamente utilizado.",
+                    tasks: [
+                        "<strong>A Recepção:</strong> Ao entrarem em casa, o Corno deve se ajoelhar, tirar os sapatos da Rainha e massagear os pés dela com a boca.",
+                        "<strong>A Apresentação do Troféu:</strong> Ele deve apresentar a calcinha molhada dela em sua mão aberta, como uma oferenda.",
+                        "<strong>A Mordaça da Vitória:</strong> A Rainha usará a calcinha como mordaça para o Corno.",
+                        "<strong>O Relatório Final:</strong> Amordaçado e de joelhos, ele ouvirá, sem códigos, o relato completo da noite da Rainha."
+                    ]
+                },
+                rainhaMission: {
+                    title: "O Triunfo da Rainha",
+                    concept: "A Rainha assume seu trono e desfruta da submissão total do seu servo.",
+                    tasks: [
+                        "<strong>O Comando:</strong> Dar as ordens para o ritual do 'Confessionário'.",
+                        "<strong>O Relato:</strong> Contar ao Corno amordaçado cada detalhe da sua noite, saboreando a sua agonia silenciosa."
+                    ]
+                }
+            },
+            {
+                phase: "FASE 6: O JULGAMENTO FINAL",
+                subtitle: "O Clímax da Noite",
+                cornoMission: {
+                    title: "A Prova de Fogo",
+                    concept: "A submissão final não é sobre o que o Corno faz, mas sobre o que ele não faz. É um teste de autocontrole absoluto.",
+                    tasks: [
+                        "<strong>A Missão Secreta:</strong> Durante a festa, a cada sinal da Rainha (🔥), ele terá 10 minutos para ir ao banheiro e enviar <strong>duas fotos</strong>: uma do seu pênis (fora da calcinha) e outra da parte de dentro da sua calcinha. Se houver o menor sinal de pré-gozo, ele falhou."
+                    ]
+                },
+                rainhaMission: {
+                    title: "A Sentença da Rainha",
+                    concept: "Com base na performance do Corno, a Rainha decide sua recompensa ou seu castigo.",
+                    tasks: [
+                        "<strong>A Recompensa (Sucesso):</strong> Se todas as fotos estiverem secas, a Rainha lhe dará um orgasmo lento e torturante com a mão.",
+                        "<strong>O Castigo (Falha):</strong> Se ele falhar, a Rainha escolherá no momento entre duas opções:",
+                        "<ul class='list-disc list-inside ml-4'><li><strong>Opção A (Ritual da Limpeza Íntima):</strong> Ela o fará gozar na sua própria barriga e ele terá que limpar com a calcinha da festa.</li><li><strong>Opção B (A Posse da Rainha):</strong> Ela o foderá com o seu brinquedinho, forçando-o a um orgasmo humilhante por trás.</li></ul>"
+                    ]
+                }
+            }
+        ];
+
+        let gameState = [];
+
+        function initializeState() {
+            const savedState = localStorage.getItem('casamentoGameState');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+            } else {
+                gameState = operationData.map(phaseData => ({
+                    ...phaseData,
+                    cornoMission: { ...phaseData.cornoMission, completed: false },
+                    rainhaMission: { ...phaseData.rainhaMission, completed: false }
+                }));
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('casamentoGameState', JSON.stringify(gameState));
+        }
+
+        function renderPhases() {
+            const container = document.getElementById('mission-phases');
+            container.innerHTML = '';
+
+            gameState.forEach((data, index) => {
+                const isComplete = data.cornoMission.completed && data.rainhaMission.completed;
+
+                const phaseElement = document.createElement('div');
+                phaseElement.className = 'rounded-lg shadow-lg section-bg overflow-hidden';
+                
+                let iconContent = '＋';
+                if (isComplete) {
+                    iconContent = '✓';
+                }
+
+                phaseElement.innerHTML = `
+                    <button class="phase-trigger w-full p-6 flex justify-between items-center text-left" data-index="${index}">
+                        <div>
+                            <h2 class="text-3xl text-white text-shadow">${data.phase} ${isComplete ? '<span class="text-green-400">(Concluída)</span>' : ''}</h2>
+                            <p class="text-md text-gray-400 text-shadow">${data.subtitle}</p>
+                        </div>
+                        <span class="icon text-3xl font-light text-white transform">${iconContent}</span>
+                    </button>
+                    <div class="phase-content">
+                        <div class="p-6 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Corno's Mission -->
+                            <div class="border-r-0 md:border-r md:border-gray-700 md:pr-6">
+                                <h3 class="text-2xl text-red-400 mb-2">Missão do Corno: ${data.cornoMission.title}</h3>
+                                <label class="checkbox-label mb-4 text-lg">
+                                    <input type="checkbox" class="hidden" data-index="${index}" data-role="corno" ${data.cornoMission.completed ? 'checked' : ''}>
+                                    <span class="checkbox-custom"></span>
+                                    Missão Cumprida
+                                </label>
+                                <p class="text-sm italic text-gray-400 mb-4">${data.cornoMission.concept}</p>
+                                <ul class="list-decimal list-inside space-y-2 text-gray-300">
+                                    ${data.cornoMission.tasks.map(task => `<li>${task}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <!-- Rainha's Mission -->
+                            <div>
+                                <h3 class="text-2xl text-blue-400 mb-2">Missão da Rainha: ${data.rainhaMission.title}</h3>
+                                <label class="checkbox-label mb-4 text-lg">
+                                    <input type="checkbox" class="hidden" data-index="${index}" data-role="rainha" ${data.rainhaMission.completed ? 'checked' : ''}>
+                                    <span class="checkbox-custom"></span>
+                                    Missão Cumprida
+                                </label>
+                                <p class="text-sm italic text-gray-400 mb-4">${data.rainhaMission.concept}</p>
+                                <ul class="list-decimal list-inside space-y-2 text-gray-300">
+                                    ${data.rainhaMission.tasks.map(task => `<li>${task}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(phaseElement);
+            });
+
+            addEventListeners();
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.phase-trigger').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    button.classList.toggle('open');
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } 
+                });
+            });
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const role = e.target.dataset.role;
+                    
+                    if (role === 'corno') {
+                        gameState[index].cornoMission.completed = e.target.checked;
+                    } else if (role === 'rainha') {
+                        gameState[index].rainhaMission.completed = e.target.checked;
+                    }
+                    
+                    saveState();
+                    renderPhases();
+                });
+            });
+        }
+
+        document.getElementById('reset-button').addEventListener('click', () => {
+             if (confirm('Tem a certeza que deseja reiniciar toda a operação? O progresso será perdido.')) {
+                localStorage.removeItem('casamentoGameState');
+                initializeState();
+                renderPhases();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeState();
+            renderPhases();
+        });
+    </script>
+</body>
+</html>
